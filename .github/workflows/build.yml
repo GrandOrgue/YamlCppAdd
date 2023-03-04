@@ -1,7 +1,7 @@
 name: Build
 
 on: [push]
-permissions: read-all|write-all
+permissions: write-all
 
 jobs:
   calc_ver:
