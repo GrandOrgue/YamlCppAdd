@@ -67,17 +67,17 @@ jobs:
         submodules: recursive
     
     - name: Install Dependencies
-      run: ${{github.workspace}}/build-scripts/YamlCppStatic/for-linux/prepare-ubuntu.sh
+      run: ${{github.workspace}}/build-scripts/YamlCppStatic/for-linux/prepare-debian-ubuntu.sh
       
     - name: Build
       working-directory: ${{github.workspace}}
-      run: ${{github.workspace}}/build-scripts/for-win64/build-on-linux.sh ${{needs.calc_ver.outputs.project_ver}} ${{needs.calc_ver.outputs.build_ver}}
+      run: ${{github.workspace}}/build-scripts/YamlCppStatic/for-linux/build-on-linux.sh ${{needs.calc_ver.outputs.project_ver}} ${{needs.calc_ver.outputs.build_ver}}
 
     - name: Upload result
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
       with:
         path: |
-          ${{github.workspace}}/build/win64/*${{needs.calc_ver.outputs.full_ver}}*.deb
+          ${{github.workspace}}/build/linux/*${{needs.calc_ver.outputs.full_ver}}*.deb
         upload-release-files: ${{ needs.calc_ver.outputs.release_flag }}
         release-upload-url: ${{ needs.calc_ver.outputs.release_upload_url }}
         if-no-files-found: error
