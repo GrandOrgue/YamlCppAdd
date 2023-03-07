@@ -11,7 +11,7 @@ BUILD_DIR=`pwd`/build/linux
 
 TMP_INSTALL_DIR=$BUILD_DIR/tmp_install
 PKG_DIR=$BUILD_DIR/${DEBIAN_PKG_NAME}_${VERSION}-${BUILD_VERSION}_all
-DEBIAN_HOST_MULTIARCH=x86_64-linux-gnu
+DEB_HOST_MULTIARCH=$(dpkg-architecture -q DEB_HOST_MULTIARCH)
 
 mkdir -p $BUILD_DIR
 rm -rf $BUILD_DIR/*
@@ -24,11 +24,11 @@ cd $BUILD_DIR
 mkdir $BUILD_DIR/build-static
 cd $BUILD_DIR/build-static
 
-LIB_INSTALL_DIR=lib/$DEBIAN_HOST_MULTIARCH
+HOST_LIB_INSTALL_DIR=lib/$DEB_HOST_MULTIARCH
 
 cmake \
   -DCMAKE_INSTALL_PREFIX=/usr \
-  -DLIB_INSTALL_DIR=$LIB_INSTALL_DIR \
+  -DLIB_INSTALL_DIR=$HOST_LIB_INSTALL_DIR \
   -DYAML_CPP_BUILD_TESTS=OFF \
   -DYAML_CPP_BUILD_TOOLS=OFF \
   . $BUILD_DIR/src
@@ -39,10 +39,23 @@ make DESTDIR=${TMP_INSTALL_DIR} install
 
 cd $BUILD_DIR
 
-mkdir -p ${PKG_DIR}/usr/${LIB_INSTALL_DIR}/cmake/yaml-cpp-static $PKG_DIR/usr/$LIB_INSTALL_DIR/pkgconfig
+# copy files to $PKG_DIR
+SRC_LIB_DIR=$TMP_INSTALL_DIR/usr/$HOST_LIB_INSTALL_DIR
+for TARGET_ARCH in amd64 i386 arm64 armhf; do
+  DEB_TARGET_MULTIARCH=$(dpkg-architecture -A $TARGET_ARCH -q DEB_TARGET_MULTIARCH)
+  TGT_LIB_DIR=$PKG_DIR/usr/lib/$DEB_TARGET_MULTIARCH
+  mkdir -p $TGT_LIB_DIR/cmake/yaml-cpp-static $TGT_LIB_DIR/pkgconfig
 
-cp -a $TMP_INSTALL_DIR/usr/$LIB_INSTALL_DIR/cmake/yaml-cpp/* $PKG_DIR/usr/$LIB_INSTALL_DIR/cmake/yaml-cpp-static/
-cp -a $TMP_INSTALL_DIR/usr/$LIB_INSTALL_DIR/pkgconfig/yaml-cpp.pc $PKG_DIR/usr/$LIB_INSTALL_DIR/pkgconfig/yaml-cpp-static.pc
+  cp -a $SRC_LIB_DIR/cmake/yaml-cpp/* $TGT_LIB_DIR/cmake/yaml-cpp-static/
+  cp -a $SRC_LIB_DIR/pkgconfig/yaml-cpp.pc $TGT_LIB_DIR/pkgconfig/yaml-cpp-static.pc
+
+  # relpace all mentioning of $DEB_HOST_MULTIARCH to $DEB_TARGET_MULTIARCH
+  if [[ $DEB_TARGET_MULTIARCH != $DEB_HOST_MULTIARCH ]]; then
+    for F in $(grep -rl $DEB_HOST_MULTIARCH $TGT_LIB_DIR/*); do
+      sed -i s/$DEB_HOST_MULTIARCH/$DEB_TARGET_MULTIARCH/g $F
+    done
+  fi
+done
 
 mkdir -p $PKG_DIR/DEBIAN
 
