@@ -83,7 +83,7 @@ jobs:
         submodules: recursive
     
     - name: Install Dependencies
-      run: ${{github.workspace}}/build-scripts/{{matrix.subproject}}/for-{{matrix.for}}/prepare-debian-ubuntu{{matrix.prepare}}.sh
+      run: ${{github.workspace}}/build-scripts/{{matrix.subproject}}/for-{{matrix.for}}/prepare-{{matrix.prepare}}.sh
       
     - name: Build
       working-directory: ${{github.workspace}}
