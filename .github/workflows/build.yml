@@ -70,7 +70,7 @@ jobs:
             prepare: debian-based
             build_on: linux
 
-          - run_on: ubuntu-latest
+          - run_on: ubuntu-20.04
             subproject: YamlCppMingw
             for: win64
             prepare: debian-based
@@ -83,7 +83,9 @@ jobs:
         submodules: recursive
     
     - name: Install Dependencies
-      run: ${{github.workspace}}/build-scripts/{{matrix.subproject}}/for-{{matrix.for}}/prepare-{{matrix.prepare}}.sh
+      run: |
+        echo ${{github.workspace}}/build-scripts/{{matrix.subproject}}/for-{{matrix.for}}/prepare-{{matrix.prepare}}.sh
+        ${{github.workspace}}/build-scripts/{{matrix.subproject}}/for-{{matrix.for}}/prepare-{{matrix.prepare}}.sh
       
     - name: Build
       working-directory: ${{github.workspace}}
