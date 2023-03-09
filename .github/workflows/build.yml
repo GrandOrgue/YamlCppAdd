@@ -61,24 +61,39 @@ jobs:
   build:
     needs: [calc_ver]
 
-    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        include:
+          - run_on: ubuntu-20.04
+            subproject: YamlCppStatic
+            for: linux
+            prepare: debian-based
+            build_on: linux
+
+          - run_on: ubuntu-20.04
+            subproject: YamlCppMingw
+            for: win64
+            prepare: debian-based
+            build_on: linux
+
+    runs-on: ${{ matrix.run_on }}
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
     
     - name: Install Dependencies
-      run: ${{github.workspace}}/build-scripts/YamlCppStatic/for-linux/prepare-debian-ubuntu.sh
+      run: ${{github.workspace}}/build-scripts/${{matrix.subproject}}/for-${{matrix.for}}/prepare-${{matrix.prepare}}.sh
       
     - name: Build
       working-directory: ${{github.workspace}}
-      run: ${{github.workspace}}/build-scripts/YamlCppStatic/for-linux/build-on-linux.sh ${{needs.calc_ver.outputs.project_ver}} ${{needs.calc_ver.outputs.build_ver}}
+      run: ${{github.workspace}}/build-scripts/${{matrix.subproject}}/for-${{matrix.for}}/build-on-${{matrix.build_on}}.sh ${{needs.calc_ver.outputs.project_ver}} ${{needs.calc_ver.outputs.build_ver}}
 
     - name: Upload result
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
       with:
         path: |
-          ${{github.workspace}}/build/linux/*${{needs.calc_ver.outputs.full_ver}}*.deb
+          ${{github.workspace}}/build/${{matrix.for}}/*${{needs.calc_ver.outputs.full_ver}}*.deb
         upload-release-files: ${{ needs.calc_ver.outputs.release_flag }}
         release-upload-url: ${{ needs.calc_ver.outputs.release_upload_url }}
         if-no-files-found: error
